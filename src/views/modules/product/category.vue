@@ -1,10 +1,10 @@
 <template>
-  <div>
-    <!--  :expand-on-click-node    show-checkbox    node-key="catId" 具体功能去官网查看
+  <!--  :expand-on-click-node    show-checkbox    node-key="catId" 具体功能去官网查看
 第一个button按钮，v-if="node.level<=2" 这样只有1,2级菜单才能使用添加功能
 第二个button按钮，v-if="node.childNodes.length==0"  只有没有子节点的菜单才能使用删除功能
 在methods中添加了append和remove方法用来测试
 -->
+  <div>
     <el-tree
       :data="menus"
       :props="defaultProps"
@@ -32,21 +32,37 @@
           >
             Delete
           </el-button>
+
+           <el-button
+            type="text"
+            size="mini"
+            @click="() => edit(data)"
+          >
+            Edit
+          </el-button>
+          
         </span>
       </span>
     </el-tree>
 
-    <el-dialog title="添加分类" :visible.sync="dialogVisible" width="30%">
-      <el-form :model="category">
-        <el-form-item label="分类名称">
-          <el-input v-model="category.name" autocomplete="off"></el-input>
+    <el-dialog title="收货地址" :visible.sync="dialogFormVisible">
+      <el-form :model="form">
+        <el-form-item label="活动名称" :label-width="formLabelWidth">
+          <el-input v-model="form.name" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="活动区域" :label-width="formLabelWidth">
+          <el-select v-model="form.region" placeholder="请选择活动区域">
+            <el-option label="区域一" value="shanghai"></el-option>
+            <el-option label="区域二" value="beijing"></el-option>
+          </el-select>
         </el-form-item>
       </el-form>
-
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisible = false">取 消</el-button>
-        <el-button type="primary" @click="addCategory()">确 定</el-button>
-      </span>
+      <div slot="footer" class="dialog-footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="dialogFormVisible = false"
+          >确 定</el-button
+        >
+      </div>
     </el-dialog>
   </div>
 </template>
@@ -58,8 +74,6 @@ export default {
 
   data() {
     return {
-      category: { name: "", parentCid: 0, catLevel: 0, showStatus: 1, sort: 0 },
-      dialogVisible: false,
       menus: [],
       expandedKey: [],
       defaultProps: {
@@ -81,35 +95,8 @@ export default {
       });
     },
 
-    // 点击append按钮时，弹出对话框（dialogVisible设置为true）
     append(data) {
       console.log("append", data);
-      this.dialogVisible = true;
-      this.category.parentCid = data.catId;
-      this.category.catLevel = data.catLevel * 1 + 1;
-    },
-
-    // 点击确定按钮时，将添加的分类数据提交
-    addCategory() {
-      console.log("提交的三级分类数据", this.category);
-      this.$http({
-        url: this.$http.adornUrl("/product/category/save"),
-        method: "post",
-        data: this.$http.adornData(this.category, false),
-      }).then(({ data }) => {
-        this.$message({
-          showClose: true,
-          message: "菜单添加成功",
-          type: "success",
-        });
-        // 关闭对话框
-        this.dialogVisible = false;
-        // 刷新菜单
-        this.getMenus();
-        // 设置默认展开的菜单
-        this.expandedKey = [this.category.parentCid];
-
-      });
     },
 
     remove(node, data) {
@@ -151,6 +138,9 @@ export default {
           // 点击取消之后的操作，暂无
         });
     },
+
+
+
   },
 
   created() {
