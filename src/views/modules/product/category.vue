@@ -64,7 +64,6 @@
 </template>
 
 <script>
-import categoryVue from "../../../../文档/category.vue";
 export default {
   comments: {},
   props: {},
