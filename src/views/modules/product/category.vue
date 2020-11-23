@@ -33,41 +33,38 @@
             Delete
           </el-button>
 
-           <el-button
-            type="text"
-            size="mini"
-            @click="() => edit(data)"
-          >
+          <el-button type="text" size="mini" @click="() => edit(data)">
             Edit
           </el-button>
-          
         </span>
       </span>
     </el-tree>
 
-    <el-dialog title="收货地址" :visible.sync="dialogFormVisible">
-      <el-form :model="form">
-        <el-form-item label="活动名称" :label-width="formLabelWidth">
-          <el-input v-model="form.name" autocomplete="off"></el-input>
+    <el-dialog :title="title" :visible.sync="dialogFormVisible" :close-on-click-modal=false>
+      <el-form :model="category">
+        <el-form-item label="分类名称">
+          <el-input v-model="category.name" autocomplete="off"></el-input>
         </el-form-item>
-        <el-form-item label="活动区域" :label-width="formLabelWidth">
-          <el-select v-model="form.region" placeholder="请选择活动区域">
-            <el-option label="区域一" value="shanghai"></el-option>
-            <el-option label="区域二" value="beijing"></el-option>
-          </el-select>
+        <el-form-item label="图标">
+          <el-input v-model="category.icon" autocomplete="off"></el-input>
+        </el-form-item>
+        <el-form-item label="单位">
+          <el-input
+            v-model="category.productUnit"
+            autocomplete="off"
+          ></el-input>
         </el-form-item>
       </el-form>
       <div slot="footer" class="dialog-footer">
         <el-button @click="dialogFormVisible = false">取 消</el-button>
-        <el-button type="primary" @click="dialogFormVisible = false"
-          >确 定</el-button
-        >
+        <el-button type="primary" @click="submitData">确 定</el-button>
       </div>
     </el-dialog>
   </div>
 </template>
 
 <script>
+import categoryVue from "../../../../文档/category.vue";
 export default {
   comments: {},
   props: {},
@@ -75,6 +72,19 @@ export default {
   data() {
     return {
       menus: [],
+      dialogFormVisible: false,
+      title: "",
+      dialogType: "",
+      category: {
+        name: "",
+        catId: null,
+        parentCid: 0,
+        icon: "",
+        catLevel: 0,
+        showStatus: 1,
+        sort: 0,
+        productUnit: "",
+      },
       expandedKey: [],
       defaultProps: {
         children: "children",
@@ -97,6 +107,36 @@ export default {
 
     append(data) {
       console.log("append", data);
+      this.dialogType = "add";
+      this.dialogFormVisible = true;
+      this.title = "添加分类";
+      // this.category={};
+      this.category.catLevel = data.catLevel * 1 + 1;
+      this.category.showStatus = 1;
+      this.category.sort = 0;
+      this.category.parentCid = data.catId;
+
+      this.category.name = "";
+      this.category.icon = "";
+      this.category.productUnit = "";
+      this.category.parentCid = data.catId;
+      
+    },
+
+    addCategory() {
+      this.$http({
+        url: this.$http.adornUrl("/product/category/save"),
+        method: "post",
+        data: this.$http.adornData(this.category, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "菜单分类保存成功",
+          type: "success",
+        });
+        this.dialogFormVisible = false;
+        this.getMenus();
+        this.expandedKey = [this.category.parentCid];
+      });
     },
 
     remove(node, data) {
@@ -139,8 +179,51 @@ export default {
         });
     },
 
+    edit(data) {
+      this.dialogFormVisible = true;
+      this.dialogType = "edit";
+      this.title = "修改分类";
 
+      this.$http({
+        url: this.$http.adornUrl(`/product/category/info/${data.catId}`),
+        method: "get",
+      }).then(({ data }) => {
+        console.log("要回显的数据", data);
+        this.category.catId = data.data.catId;
+        this.category.name = data.data.name;
+        this.category.icon = data.data.icon;
+        this.category.productUnit = data.data.productUnit;
+        this.category.parentCid=data.data.parentCid;
+      });
+    },
 
+    editCategory() {
+      console.log("editCategory method", this.category);
+      var { catId, name, productUnit, icon } = this.category;
+      this.$http({
+        url: this.$http.adornUrl("/product/category/update"),
+        method: "post",
+        data: this.$http.adornData({ catId, name, productUnit, icon }, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "修改成功",
+          type: "success",
+        });
+
+        this.dialogFormVisible = false;
+        this.getMenus();
+        this.expandedKey = [this.category.parentCid];
+      });
+    },
+
+    submitData() {
+      if (this.dialogType == "add") {
+        this.addCategory();
+      }
+      if (this.dialogType == "edit") {
+        this.editCategory();
+      }
+    },
   },
 
   created() {
