@@ -12,6 +12,8 @@
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedKey"
+      :draggable="true"
+      :allow-drop="allowDrop"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -40,7 +42,11 @@
       </span>
     </el-tree>
 
-    <el-dialog :title="title" :visible.sync="dialogFormVisible" :close-on-click-modal=false>
+    <el-dialog
+      :title="title"
+      :visible.sync="dialogFormVisible"
+      :close-on-click-modal="false"
+    >
       <el-form :model="category">
         <el-form-item label="分类名称">
           <el-input v-model="category.name" autocomplete="off"></el-input>
@@ -70,6 +76,7 @@ export default {
 
   data() {
     return {
+      maxLevel: 0,
       menus: [],
       dialogFormVisible: false,
       title: "",
@@ -119,7 +126,6 @@ export default {
       this.category.icon = "";
       this.category.productUnit = "";
       this.category.parentCid = data.catId;
-      
     },
 
     addCategory() {
@@ -192,7 +198,7 @@ export default {
         this.category.name = data.data.name;
         this.category.icon = data.data.icon;
         this.category.productUnit = data.data.productUnit;
-        this.category.parentCid=data.data.parentCid;
+        this.category.parentCid = data.data.parentCid;
       });
     },
 
@@ -221,6 +227,47 @@ export default {
       }
       if (this.dialogType == "edit") {
         this.editCategory();
+      }
+    },
+
+    allowDrop(draggingNode, dropNode, type) {
+      // 避免多次使用拖拽之后，maxLevel发生值不准确,如果没有子节点，那么maxLevel值就等于本身的catId
+      this.maxLevel = draggingNode.data.catLevel;
+
+      // 三个节点的意义：draggingNode（当前拖动的节点）、dropNode（目标节点）、type（放置的位置，在其上、下或是成为其子节点）
+
+      console.log("allowDrop", draggingNode, dropNode, type);
+
+      // 调用函数
+      this.countNodeLevel(draggingNode.data);
+
+      // 最大深度就是指，被拖动节点的有几层，比如拖动的几点是一级节点（存在二级和三级节点），那么它的层数（也就是深度）就是3
+      // 计算就是：3-1+1 ，（maxLevel）三级catLevel - （draggingNode.catLevel）一级catLevel + 1 ，其他节点都可以计算得出。
+
+      let deep = this.maxLevel - draggingNode.data.catLevel + 1;
+      console.log("深度：", deep);
+
+      // 判断能不能拖动。只要拖动节点的深度+目标节点的Level不大于3即可（因为是三级分类，所以最大catLevel不能大于3）
+      // 如果是往某个节点里面拖，return (deep+dropNode.level)<=3;如果往某个节点上下拖，就相当于往目标节点的父节点里面拖
+      if (type == "inner") {
+        return (deep + dropNode.level) <= 3;
+      } else {
+        return (deep + dropNode.parent.level) <= 3;
+      }
+
+      return
+    },
+
+    //查找节点及其所有子节点的最大 catLevel，并将其复制给maxLevel
+    countNodeLevel(node) {
+      if (node.children != null && node.children.length > 0) {
+        for (let i = 0; i < node.children.length; i++) {
+          if (node.children[i].catLevel > this.maxLevel) {
+            this.maxLevel = node.children[i].catLevel;
+          }
+          // 递归调用，查找所有子节点的catLevel
+          this.countNodeLevel(node.children[i]);
+        }
       }
     },
   },
