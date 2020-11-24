@@ -5,6 +5,13 @@
 在methods中添加了append和remove方法用来测试
 -->
   <div>
+    <el-switch
+      v-model="draggable"
+      active-text="开启拖拽"
+      inactive-text="关闭拖拽"
+    >
+    </el-switch>
+    <el-button @click="batchSave" v-if="draggable">批量保存</el-button>
     <el-tree
       :data="menus"
       :props="defaultProps"
@@ -12,7 +19,7 @@
       show-checkbox
       node-key="catId"
       :default-expanded-keys="expandedKey"
-      :draggable="true"
+      :draggable="draggable"
       :allow-drop="allowDrop"
       @node-drop="handleDrop"
     >
@@ -77,6 +84,10 @@ export default {
 
   data() {
     return {
+      // 接受拖拽之后更新的父节点信息
+      pCid: [],
+      // 开启拖拽功能
+      draggable: false,
       // 保存所有要修改的节点信息，拖拽功能后节点的信息，用于拖拽节点的数据持久化
       updateNodes: [],
       // 用来接收拖拽功能判断最大catLevel
@@ -240,19 +251,18 @@ export default {
 
     allowDrop(draggingNode, dropNode, type) {
       // 避免多次使用拖拽之后，maxLevel发生值不准确,如果没有子节点，那么maxLevel值就等于本身的catId
-      this.maxLevel = draggingNode.data.catLevel;
+      this.maxLevel = draggingNode.level;
 
       // 三个节点的意义：draggingNode（当前拖动的节点）、dropNode（目标节点）、type（放置的位置，在其上、下或是成为其子节点）
 
       console.log("allowDrop", draggingNode, dropNode, type);
 
       // 调用函数
-      this.countNodeLevel(draggingNode.data);
+      this.countNodeLevel(draggingNode);
 
       // 最大深度就是指，被拖动节点的有几层，比如拖动的几点是一级节点（存在二级和三级节点），那么它的层数（也就是深度）就是3
       // 计算就是：3-1+1 ，（maxLevel）三级catLevel - （draggingNode.catLevel）一级catLevel + 1 ，其他节点都可以计算得出。
-
-      let deep = this.maxLevel - draggingNode.data.catLevel + 1;
+      let deep = this.maxLevel - draggingNode.level + 1;
       console.log("深度：", deep);
 
       // 判断能不能拖动。只要拖动节点的深度+目标节点的Level不大于3即可（因为是三级分类，所以最大catLevel不能大于3）
@@ -268,13 +278,13 @@ export default {
 
     //查找节点及其所有子节点的最大 catLevel，并将其复制给maxLevel
     countNodeLevel(node) {
-      if (node.children != null && node.children.length > 0) {
-        for (let i = 0; i < node.children.length; i++) {
-          if (node.children[i].catLevel > this.maxLevel) {
-            this.maxLevel = node.children[i].catLevel;
+      if (node.childNodes != null && node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          if (node.childNodes[i].level > this.maxLevel) {
+            this.maxLevel = node.childNodes[i].level;
           }
           // 递归调用，查找所有子节点的catLevel
-          this.countNodeLevel(node.children[i]);
+          this.countNodeLevel(node.childNodes[i]);
         }
       }
     },
@@ -285,7 +295,7 @@ export default {
 
       let pCid = 0;
       let sibings = null;
-      this.updateNodes = [];
+      // this.updateNodes = [];
 
       // 1、当前节点的最新的父节点id
       // 如果拖拽的方式是在目标节点前后，那么最新的父节点id就是dropNode的父节点
@@ -304,7 +314,7 @@ export default {
       if (dropType == "before" || dropType == "after") {
         // 如果将某个节点拖拽至一级菜单，此时父id不是某一个节点，而是一个Array，这时候我们需要把draggingNode的父节点设置为0
         pCid =
-          dropNode.parent.data.catId == undefined ? 0 : dropNode.data.parentCid;
+          dropNode.parent.data.catId == undefined ? 0 : dropNode.parent.data.catId;
 
         // 更新后的兄弟节点
         sibings = dropNode.parent.childNodes;
@@ -312,6 +322,8 @@ export default {
         pCid = dropNode.data.catId;
         sibings = dropNode.childNodes;
       }
+
+      this.pCid.push(pCid);
 
       // 2、当前拖拽节点的最新排序更新
       // 3、当前拖拽节点的最新层级更新
@@ -345,26 +357,12 @@ export default {
       }
 
       // 打印要更新的节点数据信息
-      // console.log("updateNodes", this.updateNodes);
+      console.log("updateNodes", this.updateNodes);
 
-      for (let i = 0; i < this.updateNodes.length; i++) {
-        var { catId, sort } = this.updateNodes[i];
-        console.log("updateNodes", { catId, sort });
-      }
-
-      // 发送跟后端进行数据持久化保存
-      this.$http({
-        url: this.$http.adornUrl("/product/category/update/sort"),
-        method: "post",
-        data: this.$http.adornData(this.updateNodes, false),
-      }).then(({ data }) => {
-        this.$message({
-          message: "菜单节点顺序数据更新成功",
-          type: "success",
-        });
-        this.getMenus();
-        this.expandedKey = [pCid];
-      });
+      // for (let i = 0; i < this.updateNodes.length; i++) {
+      //   var { catId, sort } = this.updateNodes[i];
+      //   console.log("updateNodes", { catId, sort });
+      // }
     },
 
     // 递归更新节点的所有level
@@ -376,10 +374,32 @@ export default {
             catId: cNode.catId,
             catLevel: node.childNodes[i].level,
           });
+          // 递归调用
           this.updateChildLevel(node.childNodes[i]);
         }
       }
     },
+
+      // 批量保存
+    batchSave() {
+      // 发送跟后端进行数据持久化保存
+      this.$http({
+        url: this.$http.adornUrl("/product/category/update/sort"),
+        method: "post",
+        data: this.$http.adornData(this.updateNodes, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "菜单节点顺序数据更新成功",
+          type: "success",
+        });
+        this.getMenus();
+        this.expandedKey = this.pCid;
+        this.updateNodes=[];
+        this.maxLevel=0;
+        this.pCid=[]
+      });
+    },
+
   },
 
   created() {
