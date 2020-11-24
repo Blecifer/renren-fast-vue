@@ -14,6 +14,7 @@
       :default-expanded-keys="expandedKey"
       :draggable="true"
       :allow-drop="allowDrop"
+      @node-drop="handleDrop"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -76,11 +77,18 @@ export default {
 
   data() {
     return {
+      // 保存所有要修改的节点信息，拖拽功能后节点的信息，用于拖拽节点的数据持久化
+      updateNodes: [],
+      // 用来接收拖拽功能判断最大catLevel
       maxLevel: 0,
       menus: [],
+      // 控制对话框弹出可见
       dialogFormVisible: false,
+      // 控制对话框提示消息
       title: "",
+      // 控制对话框点击确定按钮调用哪个方法
       dialogType: "",
+      // 保存菜单提交的数据
       category: {
         name: "",
         catId: null,
@@ -250,12 +258,12 @@ export default {
       // 判断能不能拖动。只要拖动节点的深度+目标节点的Level不大于3即可（因为是三级分类，所以最大catLevel不能大于3）
       // 如果是往某个节点里面拖，return (deep+dropNode.level)<=3;如果往某个节点上下拖，就相当于往目标节点的父节点里面拖
       if (type == "inner") {
-        return (deep + dropNode.level) <= 3;
+        return deep + dropNode.level <= 3;
       } else {
-        return (deep + dropNode.parent.level) <= 3;
+        return deep + dropNode.parent.level <= 3;
       }
 
-      return
+      return;
     },
 
     //查找节点及其所有子节点的最大 catLevel，并将其复制给maxLevel
@@ -267,6 +275,108 @@ export default {
           }
           // 递归调用，查找所有子节点的catLevel
           this.countNodeLevel(node.children[i]);
+        }
+      }
+    },
+
+    // 拖拽节点之后，将节点属性进行重新赋值
+    handleDrop(draggingNode, dropNode, dropType, ev) {
+      console.log("handleDrop: ", draggingNode, dropNode, dropType);
+
+      let pCid = 0;
+      let sibings = null;
+      this.updateNodes = [];
+
+      // 1、当前节点的最新的父节点id
+      // 如果拖拽的方式是在目标节点前后，那么最新的父节点id就是dropNode的父节点
+      // 如果拖拽的范式是进入目标节点，那么最新的父节点就是目标节点dropNode
+
+      //  自己写的逻辑
+      // if(dropNode=="inner"){
+      //   pCid=dropNode.data.catId;
+      // }else{
+      //   pCid=dropNode.data.parentCid;
+      // };
+
+      // 三元运算符写法 let pCid=dropType=="inner"?dropNode.data.catId:dropNode.parent.data.catId;
+
+      // 项目写法:当前节点的最新的父节点id以及最新的兄弟节点
+      if (dropType == "before" || dropType == "after") {
+        // 如果将某个节点拖拽至一级菜单，此时父id不是某一个节点，而是一个Array，这时候我们需要把draggingNode的父节点设置为0
+        pCid =
+          dropNode.parent.data.catId == undefined ? 0 : dropNode.data.parentCid;
+
+        // 更新后的兄弟节点
+        sibings = dropNode.parent.childNodes;
+      } else {
+        pCid = dropNode.data.catId;
+        sibings = dropNode.childNodes;
+      }
+
+      // 2、当前拖拽节点的最新排序更新
+      // 3、当前拖拽节点的最新层级更新
+      for (let i = 0; i < sibings.length; i++) {
+        // 判断遍历的节点是不是拖拽的节点，如果是，就要改变它的父节点id，为最新的pCid
+        if (sibings[i].data.catId == draggingNode.data.catId) {
+          // 更新拖动节点的层级
+          let catLevel = draggingNode.level;
+          // 如果拖动之后层级发生变化，就更新拖动节点以及子节点的层级
+          if (sibings[i].level != catLevel) {
+            // 拖拽的节点，level更新
+            catLevel = sibings[i].level;
+
+            // 子节点level更新，调用updateChildLevel方法
+            this.updateChildLevel(sibings[i]);
+          }
+
+          // 将兄弟节点进行排序，数据库中的catId为兄弟结案的catId，sort值为i，并更新父节点
+          this.updateNodes.push({
+            catId: sibings[i].data.catId,
+            sort: i,
+            parentCid: pCid,
+            catLevel: catLevel,
+          });
+        }
+
+        // 如果遍历的节点不是拖拽的节点，只排序即可
+        else {
+          this.updateNodes.push({ catId: sibings[i].data.catId, sort: i });
+        }
+      }
+
+      // 打印要更新的节点数据信息
+      // console.log("updateNodes", this.updateNodes);
+
+      for (let i = 0; i < this.updateNodes.length; i++) {
+        var { catId, sort } = this.updateNodes[i];
+        console.log("updateNodes", { catId, sort });
+      }
+
+      // 发送跟后端进行数据持久化保存
+      this.$http({
+        url: this.$http.adornUrl("/product/category/update/sort"),
+        method: "post",
+        data: this.$http.adornData(this.updateNodes, false),
+      }).then(({ data }) => {
+        this.$message({
+          message: "菜单节点顺序数据更新成功",
+          type: "success",
+        });
+        this.getMenus();
+        this.expandedKey = [pCid];
+      });
+    },
+
+    // 递归更新节点的所有level
+    updateChildLevel(node) {
+      if (node.childNodes.length > 0) {
+        for (let i = 0; i < node.childNodes.length; i++) {
+          var cNode = node.childNodes[i].data;
+          this.updateNodes.push({
+            catId: cNode.catId,
+            catLevel: node.childNodes[i].level,
+          });
+          this.updateChildLevel(node.childNodes[i]);
         }
       }
     },
