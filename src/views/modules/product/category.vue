@@ -11,7 +11,10 @@
       inactive-text="关闭拖拽"
     >
     </el-switch>
-    <el-button @click="batchSave" v-if="draggable">批量保存</el-button>
+    <el-button type="success" @click="batchSave" v-if="draggable"
+      >批量保存</el-button
+    >
+    <el-button type="danger" @click="batchDelete">批量删除</el-button>
     <el-tree
       :data="menus"
       :props="defaultProps"
@@ -22,6 +25,7 @@
       :draggable="draggable"
       :allow-drop="allowDrop"
       @node-drop="handleDrop"
+      ref="menuTree"
     >
       <span class="custom-tree-node" slot-scope="{ node, data }">
         <span>{{ node.label }}</span>
@@ -314,7 +318,9 @@ export default {
       if (dropType == "before" || dropType == "after") {
         // 如果将某个节点拖拽至一级菜单，此时父id不是某一个节点，而是一个Array，这时候我们需要把draggingNode的父节点设置为0
         pCid =
-          dropNode.parent.data.catId == undefined ? 0 : dropNode.parent.data.catId;
+          dropNode.parent.data.catId == undefined
+            ? 0
+            : dropNode.parent.data.catId;
 
         // 更新后的兄弟节点
         sibings = dropNode.parent.childNodes;
@@ -380,7 +386,7 @@ export default {
       }
     },
 
-      // 批量保存
+    // 批量保存
     batchSave() {
       // 发送跟后端进行数据持久化保存
       this.$http({
@@ -394,12 +400,43 @@ export default {
         });
         this.getMenus();
         this.expandedKey = this.pCid;
-        this.updateNodes=[];
-        this.maxLevel=0;
-        this.pCid=[]
+        this.updateNodes = [];
+        this.maxLevel = 0;
+        this.pCid = [];
       });
     },
-
+    // TODO: 批量删除
+    batchDelete() {
+      // 要删除的catId数组
+      let catIds = [];
+      let checkedNodesNames = [];
+      let checkedNodes = this.$refs.menuTree.getCheckedNodes();
+      console.log("checkedNodes", checkedNodes);
+      // 遍历得到所有的被选中的节点id
+      for (let i = 0; i < checkedNodes.length; i++) {
+        catIds.push(checkedNodes[i].catId);
+        checkedNodesNames.push(checkedNodes[i].name);
+      }
+      this.$confirm(`是否批量删除【${checkedNodesNames}】菜单?`, "提示", {
+        confirmButtonText: "确定",
+        cancelButtonText: "取消",
+        type: "warning",
+      })
+        .then(() => {
+          this.$http({
+            url: this.$http.adornUrl("/product/category/delete"),
+            method: "post",
+            data: this.$http.adornData(catIds, false),
+          }).then(({ data }) => {
+            this.$message({
+              message:"菜单批量删除成功",
+              type:"success"
+            });
+            this.getMenus();
+          });
+        })
+        .catch(() => {});
+    },
   },
 
   created() {
