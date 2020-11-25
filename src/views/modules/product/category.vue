@@ -405,7 +405,7 @@ export default {
         this.pCid = [];
       });
     },
-    // TODO: 批量删除
+    // done: 批量删除
     batchDelete() {
       // 要删除的catId数组
       let catIds = [];
@@ -437,6 +437,8 @@ export default {
         })
         .catch(() => {});
     },
+
+   
   },
 
   created() {
