@@ -15,7 +15,9 @@
         <el-input v-model="dataForm.name" placeholder="品牌名"></el-input>
       </el-form-item>
       <el-form-item label="品牌logo地址" prop="logo">
-        <el-input v-model="dataForm.logo" placeholder="品牌logo地址"></el-input>
+        <!-- <el-input v-model="dataForm.logo" placeholder="品牌logo地址"></el-input> -->
+        <!-- todo: P64增添图标文件上传功能 -->
+        <single-upload v-model="dataForm.logo"></single-upload>
       </el-form-item>
       <el-form-item label="介绍" prop="descript">
         <el-input v-model="dataForm.descript" placeholder="介绍"></el-input>
@@ -46,10 +48,17 @@
 </template>
 
 <script>
+import singleUpload from "@/components/upload/singleUpload";
+// import SingleUpload from '../../../components/upload/singleUpload.vue';
 export default {
+  // todo: P64组件导入与使用
+  components:{
+    singleUpload
+  },
   data() {
     return {
-      visible: false,
+      visible:false,
+    SingleUploadsible: false,
       dataForm: {
         brandId: 0,
         name: "",
