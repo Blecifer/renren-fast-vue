@@ -193,7 +193,7 @@ export default {
       });
     },
 
-    // todo: P60 获取ShowStatus更新数据方法
+    // Done: P60 获取ShowStatus更新数据方法
     updateBrandStatus(data) {
       console.log("最新信息", data);
       let { brandId, showStatus } = data;
