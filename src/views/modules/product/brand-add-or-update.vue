@@ -16,15 +16,18 @@
       </el-form-item>
       <el-form-item label="品牌logo地址" prop="logo">
         <!-- <el-input v-model="dataForm.logo" placeholder="品牌logo地址"></el-input> -->
-        <!-- todo: P64增添图标文件上传功能 -->
+        <!-- Done: P64增添图标文件上传功能 -->
         <single-upload v-model="dataForm.logo"></single-upload>
       </el-form-item>
       <el-form-item label="介绍" prop="descript">
         <el-input v-model="dataForm.descript" placeholder="介绍"></el-input>
       </el-form-item>
+      <!-- todo:P65 动态绑定showStatus值-->
       <el-form-item label="显示状态" prop="showStatus">
         <el-switch
           v-model="dataForm.showStatus"
+          :active-value="1"
+          :inactive-value="0"
           active-color="#13ce66"
           inactive-color="#ff4949"
         >
@@ -37,7 +40,8 @@
         ></el-input>
       </el-form-item>
       <el-form-item label="排序" prop="sort">
-        <el-input v-model="dataForm.sort" placeholder="排序"></el-input>
+        <!-- todo: v-model.number 校验绑定接收必须是数字 -->
+        <el-input v-model.number="dataForm.sort" placeholder="排序"></el-input>
       </el-form-item>
     </el-form>
     <span slot="footer" class="dialog-footer">
@@ -51,22 +55,22 @@
 import singleUpload from "@/components/upload/singleUpload";
 // import SingleUpload from '../../../components/upload/singleUpload.vue';
 export default {
-  // todo: P64组件导入与使用
-  components:{
-    singleUpload
+  // Done: P64组件导入与使用
+  components: {
+    singleUpload,
   },
   data() {
     return {
-      visible:false,
-    SingleUploadsible: false,
+      visible: false,
+      SingleUploadsible: false,
       dataForm: {
         brandId: 0,
         name: "",
         logo: "",
         descript: "",
-        showStatus: "",
+        showStatus: 1,
         firstLetter: "",
-        sort: "",
+        sort: 0,
       },
       dataRule: {
         name: [{ required: true, message: "品牌名不能为空", trigger: "blur" }],
@@ -83,10 +87,36 @@ export default {
             trigger: "blur",
           },
         ],
+        // todo: 首字母校验
         firstLetter: [
-          { required: true, message: "检索首字母不能为空", trigger: "blur" },
+          {
+            validator: (rule, value, callback) => {
+              if (value == "") {
+                callback(new Error("首字母必须填写"));
+              } else if (!/^[a-zA-Z]$/.test(value)) {
+                callback(new Error("首字母必须填写a-z或者A-Z之间"));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur",
+          },
         ],
-        sort: [{ required: true, message: "排序不能为空", trigger: "blur" }],
+        // todo: 排序校验
+        sort: [
+          {
+            validator: (rule, value, callback) => {
+              if (value == "") {
+                callback(new Error("排序字段必须填写"));
+              } else if (!Number.isInteger(value) || value < 0) {
+                callback(new Error("排序字段必须是一个不小于0的整数"));
+              } else {
+                callback();
+              }
+            },
+            trigger: "blur",
+          },
+        ],
       },
     };
   },
