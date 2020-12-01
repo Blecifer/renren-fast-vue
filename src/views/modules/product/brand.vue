@@ -57,7 +57,7 @@
         label="品牌名"
       >
       </el-table-column>
-      <!-- todo:P65 logo图片显示功能优化 -->
+      <!-- Done:P65 logo图片显示功能优化 -->
       <el-table-column
         prop="logo"
         header-align="center"
@@ -204,11 +204,11 @@ export default {
     // Done: P60 获取ShowStatus更新数据方法
     updateBrandStatus(data) {
       console.log("最新信息", data);
-      let { brandId, showStatus } = data;
+      let { brandId, showStatus ,name} = data;
       this.$http({
-        url: this.$http.adornUrl("/product/brand/update"),
+        url: this.$http.adornUrl("/product/brand/update/status"),
         method: "post",
-        data: this.$http.adornData({ brandId, showStatus }, false),
+        data: this.$http.adornData({ brandId, showStatus ,name}, false),
       }).then(({ data }) => {
         this.$message({
           message:"状态更新成功",

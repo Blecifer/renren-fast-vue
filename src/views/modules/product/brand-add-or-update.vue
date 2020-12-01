@@ -22,7 +22,7 @@
       <el-form-item label="介绍" prop="descript">
         <el-input v-model="dataForm.descript" placeholder="介绍"></el-input>
       </el-form-item>
-      <!-- todo:P65 动态绑定showStatus值-->
+      <!-- Done:P65 动态绑定showStatus值-->
       <el-form-item label="显示状态" prop="showStatus">
         <el-switch
           v-model="dataForm.showStatus"
@@ -40,7 +40,7 @@
         ></el-input>
       </el-form-item>
       <el-form-item label="排序" prop="sort">
-        <!-- todo: v-model.number 校验绑定接收必须是数字 -->
+        <!-- Done: v-model.number 校验绑定接收必须是数字 -->
         <el-input v-model.number="dataForm.sort" placeholder="排序"></el-input>
       </el-form-item>
     </el-form>
@@ -87,7 +87,7 @@ export default {
             trigger: "blur",
           },
         ],
-        // todo: 首字母校验
+        // Done: 首字母校验
         firstLetter: [
           {
             validator: (rule, value, callback) => {
@@ -102,11 +102,11 @@ export default {
             trigger: "blur",
           },
         ],
-        // todo: 排序校验
+        // Done: 排序校验
         sort: [
           {
             validator: (rule, value, callback) => {
-              if (value == "") {
+              if (value == null) {
                 callback(new Error("排序字段必须填写"));
               } else if (!Number.isInteger(value) || value < 0) {
                 callback(new Error("排序字段必须是一个不小于0的整数"));
