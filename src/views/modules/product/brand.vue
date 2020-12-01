@@ -65,10 +65,11 @@
         label="品牌logo地址"
       >
       <template slot-scope="scope">
-        <el-image style="width: 100px;height:80px" 
+        <!-- <el-image style="width: 100px;height:80px" 
         :src="scope.row.logo"
         fit="contain">
-        </el-image>
+        </el-image> -->
+         <img :src="scope.row.logo" style="width: 100px; height: 85px" />
 
       </template>
       </el-table-column>
