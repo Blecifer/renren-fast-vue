@@ -1,8 +1,8 @@
-<!-- todo:P71 前端组件抽取和父子组件交互 -->
+<!-- done:P71 前端组件抽取和父子组件交互 -->
 <template>
   <el-row :gutter="20">
     <el-col :span="6">
-      <!-- todo:p71 感知子组件的传递事件，并调用 -->
+      <!-- dnoe:p71 感知子组件的传递事件，并调用 -->
       <category @tree-node-click="treeNodeClick"></category>
     </el-col>
     <el-col :span="18">
@@ -167,7 +167,7 @@ export default {
     this.getDataList();
   },
   methods: {
-    // todo: p71父子组件传递,把子组件传递过来的值进行处理
+    // dnoe: p71父子组件传递,把子组件传递过来的值进行处理
     treeNodeClick(data, node, component) {
       console.log(
         "atttrgroup感知到category节点被点击了",

@@ -1,4 +1,4 @@
-<!-- TODO: P71 前端组件抽取 -->
+<!-- dnoe: P71 前端组件抽取 -->
 <template>
   <el-tree :data="menus" :props="defaultProps" node-key="catId" ref="menuTree" @node-click="nodeClick">
   </el-tree>
@@ -42,7 +42,7 @@ export default {
     nodeClick(data,node,component){
       // 共三个参数，依次为：传递给 data 属性的数组中该节点所对应的对象、节点对应的 Node、节点组件本身。
         console.log("common-category被点击了：",data,node,component);
-            // todo: P71向父组件发送事件
+            // dnoe: P71向父组件发送事件
             // 三个参数：名字（用于父组件接收使用）：node-click-tree;要给父组件传递的值：data,node,category
         this.$emit("tree-node-click",data,node,component)
 
