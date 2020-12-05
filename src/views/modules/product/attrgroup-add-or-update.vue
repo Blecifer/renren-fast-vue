@@ -3,6 +3,7 @@
     :title="!dataForm.id ? '新增' : '修改'"
     :close-on-click-modal="false"
     :visible.sync="visible"
+    @closed="dialogClose"
   >
     <el-form
       :model="dataForm"
@@ -28,11 +29,13 @@
       </el-form-item>
       <el-form-item label="所属分类id" prop="catelogId">
         <!-- <el-input v-model="dataForm.catelogId" placeholder="所属分类id"></el-input> -->
-        <!-- todo:P73 分组新增和级联选择器 -->
+        <!-- done:P73 分组新增和级联选择器 -->
         <el-cascader
-          v-model="dataForm.catelogIds"
+          v-model="dataForm.catelogPath"
           :options="categorys"
           :props="props"
+          filterable
+           placeholder="输入搜索关键字"
         ></el-cascader>
       </el-form-item>
     </el-form>
@@ -62,9 +65,9 @@ export default {
         sort: "",
         descript: "",
         icon: "",
-         // todo: P73 存放级联选择器选中的所有catId（一级分类，二级分类，三级分类），
+         // done: P73 存放级联选择器选中的所有catId（一级分类，二级分类，三级分类），
         //  但是所属分类的id应该是范围最小的一个，即最后一个，提交最后一个即可
-        catelogIds: [],
+        catelogPath: [],
         catelogId:0
       },
       dataRule: {
@@ -83,7 +86,7 @@ export default {
     };
   },
   methods: {
-    // todo: P73
+    // done: P73
     getCategorys(){
         this.$http({
         url: this.$http.adornUrl("/product/category/list/tree"),
@@ -93,6 +96,10 @@ export default {
         console.log("successly get data...", data.data);
         return (this.categorys = data.data);
       });
+    },
+
+    dialogClose(){
+      this.dataForm.catelogPath =[];
     },
 
     init(id) {
@@ -114,6 +121,8 @@ export default {
               this.dataForm.descript = data.attrGroup.descript;
               this.dataForm.icon = data.attrGroup.icon;
               this.dataForm.catelogId = data.attrGroup.catelogId;
+              // catelogPath由于显示菜单的完整路径，然后根据完整路径显示级联选择器的菜单
+              this.dataForm.catelogPath=data.attrGroup.catelogPath;
             }
           });
         }
@@ -136,8 +145,8 @@ export default {
               sort: this.dataForm.sort,
               descript: this.dataForm.descript,
               icon: this.dataForm.icon,
-               // todo: P73 提交catIds数组里面的最后一个值
-              catelogId: this.dataForm.catelogIds[this.dataForm.catelogIds.length-1],
+               // done: P73 提交catIds数组里面的最后一个值  P74将所有的catelogIds替换为了catelogPath
+              catelogId: this.dataForm.catelogPath[this.dataForm.catelogPath.length-1],
             }),
           }).then(({ data }) => {
             if (data && data.code === 0) {
