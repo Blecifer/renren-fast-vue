@@ -63,7 +63,7 @@
           :inactive-value="0"
         ></el-switch>
       </el-form-item>
-      <el-form-item label="快速展示" prop="showDesc" v-if="type == 1">
+      <el-form-item label="快速展示" prop="showDesc" >
         <el-switch
           v-model="dataForm.showDesc"
           active-color="#13ce66"
@@ -123,7 +123,8 @@ export default {
         ],
         valueType: [
           {
-            required: true,
+               //todo: P78 valueType 暂时没用，校验暂时关闭
+            required: false,
             message: "值类型不能为空",
             trigger: "blur"
           }
