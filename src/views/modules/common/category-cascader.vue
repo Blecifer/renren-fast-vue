@@ -22,10 +22,11 @@
 <script>
 //这里可以导入其他文件（比如：组件，工具js，第三方插件js，json文件，图片文件等等）
 //例如：import 《组件名称》 from '《组件路径》';
-
+import PubSub from 'pubsub-js'
 export default {
   //import引入的组件需要注入到对象中才能使用
-  components: {},
+  components: {
+  },
   //接受父组件传来的值
   props: {
     catelogPath: {
@@ -44,7 +45,8 @@ export default {
         children: "children"
       },
       categorys: [],
-      paths: this.catelogPath
+      paths: this.catelogPath,
+      
     };
   },
   watch:{
@@ -54,7 +56,7 @@ export default {
     paths(v){
       this.$emit("update:catelogPath",v);
       //还可以使用pubsub-js进行传值
-      this.PubSub.publish("catPath",v);
+      PubSub.publish("catPath",v);
     }
   },
   //方法集合
