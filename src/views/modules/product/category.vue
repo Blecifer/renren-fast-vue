@@ -213,7 +213,8 @@ export default {
     },
     allowDrop(draggingNode, dropNode, type) {
       //1、被拖动的当前节点以及所在的父节点总层数不能大于3
-
+      // note:
+      this.maxLevel=draggingNode.catLevel;
       //1）、被拖动的当前节点总层数
       console.log("allowDrop:", draggingNode, dropNode, type);
       //
