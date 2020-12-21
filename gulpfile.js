@@ -57,7 +57,7 @@ gulp.task('cleanBuild', function () {
 });
 // 清空
 gulp.task('clean', function () {
-  return del([versionPath])
+  return del([distPath])
 });
 
 
